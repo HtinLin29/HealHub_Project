@@ -1,0 +1,18 @@
+# Root workspace
+node_modules/
+.expo/
+
+# Secrets and local notes (never commit credentials)
+.env
+.env.*
+!.env.example
+project name - HealHub.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
