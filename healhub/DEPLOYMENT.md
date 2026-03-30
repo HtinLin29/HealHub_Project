@@ -47,6 +47,13 @@ Do **not** use the service role key in frontend environment variables.
 - Build command: `npm run build`
 - Output directory: `dist`
 
+## Do **not** use this (wrong tool)
+`npx plugins add vercel/vercel-plugin` is **not** for deploying HealHub. It installs an editor “plugins” helper and fails with *No supported targets detected* if `claude`/`cursor` binaries are not on your PATH.
+
+**Deploy instead:**
+1. **[vercel.com](https://vercel.com)** → import your **GitHub** repo → set **Root Directory** to `healhub`, add env vars, **Deploy**; or  
+2. From `healhub`: `npx vercel` (Vercel CLI — you must be logged in).
+
 ## Before deploying
 1. Confirm Supabase project URL and anon key are correct.
 2. Confirm RLS policies are applied.

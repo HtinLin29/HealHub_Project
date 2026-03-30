@@ -2,6 +2,8 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
+import { ActivityIndicator, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import WebView from 'react-native-webview';
 
 function buildTimeHealhubUrlMisconfigured(url: string): string | null {
   if (!Device.isDevice) return null;
@@ -10,8 +12,6 @@ function buildTimeHealhubUrlMisconfigured(url: string): string | null {
   }
   return null;
 }
-import { ActivityIndicator, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import WebView from 'react-native-webview';
 
 /**
  * HealHub web URL:
@@ -64,11 +64,18 @@ export default function App() {
       <View style={styles.webWrap}>
         <WebView
           source={{ uri: url }}
+          domStorageEnabled
+          thirdPartyCookiesEnabled
           onLoadStart={() => {
             setLoading(true);
             setError(null);
           }}
           onLoadEnd={() => setLoading(false)}
+          onNavigationStateChange={(navState) => {
+            if (!navState.loading) {
+              setLoading(false);
+            }
+          }}
           onError={(e) => {
             setLoading(false);
             setError(`Failed to load: ${String(e.nativeEvent?.description || 'Unknown error')}`);
