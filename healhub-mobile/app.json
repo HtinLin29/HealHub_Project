@@ -13,6 +13,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.healhub.mobile",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
@@ -20,6 +21,8 @@
       }
     },
     "android": {
+      "package": "com.healhub.mobile",
+      "versionCode": 1,
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -32,6 +35,12 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": []
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "b4e3cf74-38ac-4866-9df8-87e97d713548"
+      }
+    },
+    "owner": "htinlin29"
   }
 }

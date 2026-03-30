@@ -2,6 +2,14 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
+
+function buildTimeHealhubUrlMisconfigured(url: string): string | null {
+  if (!Device.isDevice) return null;
+  if (/127\.0\.0\.1|localhost/i.test(url) || url.includes('10.0.2.2')) {
+    return `Invalid HealHub URL for a real device: ${url}. Set EXPO_PUBLIC_HEALHUB_URL (EAS Environment Variables for APK builds — see healhub-mobile/.env.example).`;
+  }
+  return null;
+}
 import { ActivityIndicator, Platform, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import WebView from 'react-native-webview';
 
@@ -12,10 +20,8 @@ import WebView from 'react-native-webview';
  * - Physical device: uses Metro host IP + port 5173 (same PC as Expo; allow LAN in Windows Firewall).
  */
 function resolveHealhubUrl(): string {
-  const fromEnv =
-    typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_HEALHUB_URL
-      ? String(process.env.EXPO_PUBLIC_HEALHUB_URL).trim()
-      : '';
+  // Direct process.env.EXPO_PUBLIC_* (no ?. on env) so Expo can inline values in EAS/release bundles.
+  const fromEnv = String(process.env.EXPO_PUBLIC_HEALHUB_URL ?? '').trim();
   if (fromEnv) return fromEnv.replace(/\/$/, '');
 
   if (Platform.OS === 'android' && !Device.isDevice) {
@@ -35,8 +41,23 @@ function resolveHealhubUrl(): string {
 
 export default function App() {
   const url = useMemo(() => resolveHealhubUrl(), []);
+  const urlConfigError = useMemo(() => buildTimeHealhubUrlMisconfigured(url), [url]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  if (urlConfigError) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.errorOverlay}>
+          <Text style={styles.errorText}>{urlConfigError}</Text>
+          <Text style={styles.errorHint}>
+            Rebuild the APK after setting EXPO_PUBLIC_HEALHUB_URL (and Supabase EXPO_PUBLIC_* if needed) in the Expo dashboard or EAS secrets.
+          </Text>
+        </View>
+        <StatusBar style="auto" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
