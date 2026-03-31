@@ -30,11 +30,19 @@ const OLLAMA_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 120_000);
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-const corsOrigin = process.env.OWNER_AI_CORS_ORIGIN;
+/** Comma-separated list or single URL; unset = reflect request Origin (works for any frontend). */
+function resolveCorsOrigin(): boolean | string | string[] {
+  const raw = process.env.OWNER_AI_CORS_ORIGIN?.trim();
+  if (!raw || raw === '*') return true;
+  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) return true;
+  if (parts.length === 1) return parts[0];
+  return parts;
+}
 
 app.use(
   cors({
-    origin: corsOrigin === '*' ? true : corsOrigin || true,
+    origin: resolveCorsOrigin(),
     credentials: true,
   }),
 );

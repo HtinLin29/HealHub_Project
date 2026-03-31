@@ -1,3 +1,5 @@
+import { ownerAiChatEndpoint } from '../lib/aiBridgeUrl';
+
 export type OllamaChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
 /**
@@ -5,7 +7,7 @@ export type OllamaChatMessage = { role: 'system' | 'user' | 'assistant'; content
  * Send only user/assistant turns (no system message).
  */
 export async function ownerAiChat(accessToken: string, messages: OllamaChatMessage[]): Promise<string> {
-  const r = await fetch('/api/owner-ai/chat', {
+  const r = await fetch(ownerAiChatEndpoint(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

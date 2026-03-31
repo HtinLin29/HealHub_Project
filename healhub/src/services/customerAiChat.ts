@@ -1,3 +1,5 @@
+import { customerAiChatEndpoint } from '../lib/aiBridgeUrl';
+
 export type CustomerOllamaChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
 /**
@@ -5,7 +7,7 @@ export type CustomerOllamaChatMessage = { role: 'system' | 'user' | 'assistant';
  * Send only user/assistant turns (no system message).
  */
 export async function customerAiChat(accessToken: string, messages: CustomerOllamaChatMessage[]): Promise<string> {
-  const r = await fetch('/api/customer-ai/chat', {
+  const r = await fetch(customerAiChatEndpoint(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

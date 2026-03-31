@@ -28,7 +28,9 @@ Frontend flags (optional):
 - `VITE_ENABLE_OWNER_AI` — default on if unset
 - `VITE_ENABLE_CUSTOMER_AI` — default on if unset
 
-Production: run the same Express server (or equivalent) where your API can reach Ollama; set `OWNER_AI_CORS_ORIGIN` if needed.
+Production (Vercel + phone): the static site has **no** `/api` proxy. Set **`VITE_AI_BRIDGE_URL`** on Vercel to the **https origin** of your hosted Express bridge (no trailing slash). Deploy **`healhub/server`** on Railway, Render, Fly.io, a VPS, etc. with **`SUPABASE_URL`** / **`SUPABASE_ANON_KEY`**, **`OLLAMA_URL`** (must be reachable from that host), and **`OWNER_AI_CORS_ORIGIN`** (e.g. `https://your-app.vercel.app` or comma-separated list). Then **redeploy Vercel** so the new env is baked into the build.
+
+Local dev: leave **`VITE_AI_BRIDGE_URL`** unset; run **`npm run server:dev`** and use the Vite proxy. Set **`OWNER_AI_CORS_ORIGIN`** on the bridge only when you want to restrict browser origins.
 
 The Owner AI only performs **allowlisted read queries** (no arbitrary SQL, no writes). It uses the **same Supabase session as the owner** (RLS applies). If `patientsSample` is always empty in the AI but CRM shows patients, add an RLS policy allowing **owners** to `SELECT` `customer_patients` (or keep using the existing app behavior).
 
@@ -39,6 +41,10 @@ Set these in your deployment platform:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+
+Optional for **Owner/Customer AI** on the live site:
+
+- `VITE_AI_BRIDGE_URL` — https origin of the hosted `server` (see above)
 
 Do **not** use the service role key in frontend environment variables.
 
