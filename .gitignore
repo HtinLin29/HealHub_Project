@@ -6,7 +6,6 @@ node_modules/
 .env
 .env.*
 !.env.example
-!healhub/.env.production
 project name - HealHub.txt
 
 # OS / editor

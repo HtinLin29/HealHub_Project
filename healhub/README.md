@@ -34,6 +34,4 @@ Required files:
 - **Customer shopping assistant** (Ollama): ask about products and your orders — run `npm run server:dev` + Ollama (`DEPLOYMENT.md`). Toggle with `VITE_ENABLE_CUSTOMER_AI`.
 
 ## Deployment
-Recommended frontend deployment: **Vercel**.
-
-See `DEPLOYMENT.md` for the full checklist.
+Local development and **Expo Go** are documented in `DEPLOYMENT.md` (Vite + `server:dev` + Ollama).

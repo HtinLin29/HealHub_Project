@@ -14,15 +14,29 @@ function buildTimeHealhubUrlMisconfigured(url: string): string | null {
 }
 
 /**
- * HealHub web URL:
+ * HealHub web URL — local Vite + `npm run server:dev` on your PC (not Vercel).
  * - Set `EXPO_PUBLIC_HEALHUB_URL` in `.env` (e.g. http://192.168.1.5:5173) for a fixed dev machine.
  * - Simulators: Android uses 10.0.2.2, iOS uses localhost (HealHub must run: `npm run dev` in healhub).
  * - Physical device: uses Metro host IP + port 5173 (same PC as Expo; allow LAN in Windows Firewall).
  */
+function shouldIgnoreRemoteHealhubEnvUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    // Old Expo / EAS env often still points here; we only load the local Vite server for dev.
+    if (host === 'vercel.app' || host.endsWith('.vercel.app')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 function resolveHealhubUrl(): string {
   // Direct process.env.EXPO_PUBLIC_* (no ?. on env) so Expo can inline values in EAS/release bundles.
   const fromEnv = String(process.env.EXPO_PUBLIC_HEALHUB_URL ?? '').trim();
-  if (fromEnv) return fromEnv.replace(/\/$/, '');
+  if (fromEnv) {
+    const cleaned = fromEnv.replace(/\/$/, '');
+    if (!shouldIgnoreRemoteHealhubEnvUrl(cleaned)) return cleaned;
+  }
 
   if (Platform.OS === 'android' && !Device.isDevice) {
     return 'http://10.0.2.2:5173';
@@ -104,7 +118,11 @@ export default function App() {
         {error ? (
           <View style={styles.errorOverlay}>
             <Text style={styles.errorText}>{error}</Text>
-            <Text style={styles.errorHint}>Set EXPO_PUBLIC_HEALHUB_URL in healhub-mobile/.env and restart Expo.</Text>
+            <Text style={styles.errorHint}>
+              Use local HealHub: run healhub `npm run dev` + `npm run server:dev`, then set EXPO_PUBLIC_HEALHUB_URL to
+              http://YOUR_PC_IP:5173 or restart Expo with cache clear (`npx expo start -c`). Remove EXPO_PUBLIC_HEALHUB_URL from
+              expo.dev if it still points at Vercel.
+            </Text>
           </View>
         ) : null}
       </View>

@@ -1,83 +1,37 @@
-# HealHub Deployment Checklist
+# HealHub — local dev & Expo Go
 
-## Platform
-Recommended: **Vercel** for the frontend.
+Default workflow: run the **Vite** app and **AI bridge** on your PC, open the site in the browser or in **Expo Go** (see `healhub-mobile`).
 
 ## AI bridge (Ollama) — Owner + Customer
-Local dev: run **`npm run server:dev`** in `healhub` (Express on port **8787** by default). The Vite dev server proxies **`/api/*`** to that process (see `vite.config.ts`). **Ollama** must be running locally (`OLLAMA_URL`, default `http://127.0.0.1:11434`).
 
-- **Owner AI:** `POST /api/owner-ai/chat` — requires `role=owner`. See optional env vars below for owner tuning.
-- **Customer AI:** `POST /api/customer-ai/chat` — requires `role=customer`. Floating **Shopping assistant** on customer pages (when `VITE_ENABLE_CUSTOMER_AI` is not false). Injects allowlisted **product catalog** + **your orders** (RLS). Slightly higher default temperature for friendlier tone.
+From **`healhub`**:
 
-Shared optional env vars:
+1. **`npm run dev`** — Vite on port **5173** (`--host` allows LAN / Expo WebView).
+2. **`npm run server:dev`** — Express on **8787**; Vite proxies **`/api/*`** here (`vite.config.ts`).
+3. **Ollama** running (`OLLAMA_URL`, default `http://127.0.0.1:11434`).
 
-- `OLLAMA_MODEL` — default `llama3.2`
-- `OLLAMA_TEMPERATURE` — default `0.22` (owner; lower = more factual)
-- `CUSTOMER_AI_TEMPERATURE` — default `0.4` (customer shopping assistant)
-- `OWNER_AI_PORT` — default `8787`
-- `OLLAMA_TIMEOUT_MS` — default `120000`
+Leave **`VITE_AI_BRIDGE_URL`** unset so the app uses same-origin **`/api/...`**.
 
-Customer-only (optional):
+- **Owner AI:** `POST /api/owner-ai/chat` — requires `role=owner`.
+- **Customer AI:** `POST /api/customer-ai/chat` — requires `role=customer` (shopping assistant on customer pages when enabled).
 
-- `CUSTOMER_AI_RECENT_ORDERS_LIMIT` — default `40`
-- `CUSTOMER_AI_PRODUCTS_LIMIT` — default `100`
-- `CUSTOMER_AI_PAYLOAD_JSON_MAX` — default `8800`
+Optional server env: `OLLAMA_MODEL`, `OLLAMA_TEMPERATURE`, `CUSTOMER_AI_TEMPERATURE`, `OWNER_AI_PORT`, `OLLAMA_TIMEOUT_MS`, customer limits in `server/README.md`. Frontend toggles: `VITE_ENABLE_OWNER_AI`, `VITE_ENABLE_CUSTOMER_AI`.
 
-Frontend flags (optional):
+**Expo Go:** in `healhub-mobile/.env` set **`EXPO_PUBLIC_HEALHUB_URL=http://YOUR_PC_LAN_IP:5173`** (or leave unset so Expo picks the dev host where possible). Run Ollama + both commands above on the same PC.
 
-- `VITE_ENABLE_OWNER_AI` — default on if unset
-- `VITE_ENABLE_CUSTOMER_AI` — default on if unset
+## Environment variables (`healhub/.env`)
 
-Production (Vercel + phone): the static site has **no** `/api` proxy. Set **`VITE_AI_BRIDGE_URL`** on Vercel to the **https origin** of your hosted Express bridge (no trailing slash). Deploy **`healhub/server`** on Railway, Render, Fly.io, a VPS, etc. with **`SUPABASE_URL`** / **`SUPABASE_ANON_KEY`**, **`OLLAMA_URL`** (must be reachable from that host), and **`OWNER_AI_CORS_ORIGIN`** (e.g. `https://your-app.vercel.app` or comma-separated list). Then **redeploy Vercel** so the new env is baked into the build.
+- **`VITE_SUPABASE_URL`**, **`VITE_SUPABASE_ANON_KEY`** — required.
+- **`VITE_AI_BRIDGE_URL`** — optional; only if you deploy a static build and host the Express app elsewhere.
 
-Local dev: leave **`VITE_AI_BRIDGE_URL`** unset; run **`npm run server:dev`** and use the Vite proxy. Set **`OWNER_AI_CORS_ORIGIN`** on the bridge only when you want to restrict browser origins.
+Do **not** put the Supabase **service role** key in frontend env vars.
 
-The Owner AI only performs **allowlisted read queries** (no arbitrary SQL, no writes). It uses the **same Supabase session as the owner** (RLS applies). If `patientsSample` is always empty in the AI but CRM shows patients, add an RLS policy allowing **owners** to `SELECT` `customer_patients` (or keep using the existing app behavior).
+## Optional: production build
 
-Customer AI uses the same security model with the **customer** JWT: only catalog + orders visible under RLS.
+- **`npm run build`** → **`dist/`**; **`npm run preview`** to test locally.
+- If the static files are not served from the same origin as the API, set **`VITE_AI_BRIDGE_URL`** to your bridge’s https origin before building.
 
-## Required environment variables
-Set these in your deployment platform:
+## Checklist
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-
-Optional for **Owner/Customer AI** on the live site:
-
-- `VITE_AI_BRIDGE_URL` — https origin of the hosted `server` (see above)
-
-Do **not** use the service role key in frontend environment variables.
-
-## Build settings
-- Install command: `npm install`
-- Build command: `npm run build`
-- Output directory: `dist`
-
-## Do **not** use this (wrong tool)
-`npx plugins add vercel/vercel-plugin` is **not** for deploying HealHub. It installs an editor “plugins” helper and fails with *No supported targets detected* if `claude`/`cursor` binaries are not on your PATH.
-
-**Deploy instead:**
-1. **[vercel.com](https://vercel.com)** → import your **GitHub** repo → set **Root Directory** to `healhub`, add env vars, **Deploy**; or  
-2. From `healhub`: `npx vercel` (Vercel CLI — you must be logged in).
-
-## Before deploying
-1. Confirm Supabase project URL and anon key are correct.
-2. Confirm RLS policies are applied.
-3. Confirm `product-images` bucket exists.
-4. Confirm at least one owner user exists in `public.users` with role `owner`.
-5. Test sign in, owner access, shop access, cart, and checkout locally.
-
-## After deploying
-1. Verify homepage loads.
-2. Verify `/login` works.
-3. Verify owner account can access `/owner`.
-4. Verify customer account is blocked from owner-only pages.
-5. Verify shop images load from Supabase Storage.
-6. Verify checkout creates `orders` and `order_items`.
-7. Verify order status changes affect stock as expected.
-
-## Rollback
-If a deployment breaks:
-- restore the previous Vercel deployment
-- re-check environment variables
-- re-check Supabase RLS/policies
+1. Supabase URL + anon key correct; RLS applied; `product-images` bucket exists; owner user in `public.users`.
+2. Sign-in, owner routes, shop, checkout, and AI (with Ollama + `server:dev`) work locally.
