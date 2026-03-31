@@ -800,7 +800,7 @@ export default function OwnerDashboard() {
 
           <section className="grid grid-cols-1 gap-5">
             <Panel
-              title={revenueRange === 'all' ? 'Revenue trend (monthly)' : 'Revenue trend (daily)'}
+              title={revenueRange === 'all' ? 'Revenue trend (monthly)' : 'Revenue trend'}
               subtitle={
                 revenueRange === 'all' ? `${revenueLabel} · revenue-status orders` : `${revenueLabel} · paid pipeline only`
               }
